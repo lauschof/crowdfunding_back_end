@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from .permissions import IsOwnerOrReadOnly
 from django.http import Http404
-from .models import Project, Pledge
+from .models import Project, Pledge, Like
 from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer
 
 class ProjectList(APIView):
@@ -109,3 +109,54 @@ class PledgeList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+class LikeProject(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
+        ]
+
+    def get_project(self, pk):
+        try:
+            project = Project.objects.get(pk=pk)
+            return project
+        except Project.DoesNotExist:
+            raise Http404("Project not found")
+
+    def post(self, request, pk):
+        # Fetch project using get_project() and handle 404 manually
+        project = self.get_project(pk)
+        
+        # Check if the user has already liked the project
+        if Like.objects.filter(user=request.user, project=project).exists():
+            return Response({'error': 'You already liked this project!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create a like
+        Like.objects.create(user=request.user, project=project)
+        return Response({'message': 'Project liked!'}, status=status.HTTP_201_CREATED)
+    
+
+class UnlikeProject(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
+        ]
+
+    def get_project(self, pk):
+        try:
+            project = Project.objects.get(pk=pk)
+            return project
+        except Project.DoesNotExist:
+            raise Http404("Project not found")
+
+    def delete(self, request, pk):
+        # Fetch project using get_project() and handle 404 manually
+        project = self.get_project(pk)
+
+        # Check if the user has liked the project before
+        like = Like.objects.filter(user=request.user, project=project).first()
+        if like:
+            like.delete()
+            return Response({'message': 'Project unliked!'}, status=status.HTTP_200_OK)
+        
+        return Response({'error': 'You haven’t liked this project yet!'}, status=status.HTTP_400_BAD_REQUEST)
+    

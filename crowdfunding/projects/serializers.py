@@ -10,10 +10,13 @@ class PledgeSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.id')
+    liked_users = serializers.StringRelatedField(many=True, source='likes.user', read_only=True)
+    like_count = serializers.IntegerField(source='likes.count', read_only=True)
 
     class Meta:
-        model = apps.get_model('projects.Project')
-        fields = '__all__'
+        model = apps.get_model('projects.Project')  # Defines the Project model
+        fields = ['id', 'title', 'description', 'goal', 'image', 'is_open', 'date_created', 'owner', 'liked_users', 'like_count']
+
 
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
