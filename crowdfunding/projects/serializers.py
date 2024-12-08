@@ -17,20 +17,22 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = apps.get_model('projects.Project')  # Defines the Project model
         fields = ['id', 'title', 'description', 'goal', 'image', 'is_open', 'date_created', 'owner', 'liked_users', 'like_count']
 
-
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
+
+    class Meta(ProjectSerializer.Meta):  
+        fields = ProjectSerializer.Meta.fields + ['pledges']
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
         instance.goal = validated_data.get('goal', instance.goal)
-        instance.image = validated_data.get('image',    instance.image)
-        instance.is_open = validated_data.get('is_open',    instance.is_open)
-        instance.date_created = validated_data.get('date_created',  instance.date_created)
-        instance.owner = validated_data.get('owner',    instance.owner)
+        instance.image = validated_data.get('image', instance.image)
+        instance.is_open = validated_data.get('is_open', instance.is_open)
+        instance.date_created = validated_data.get('date_created', instance.date_created)
+        instance.owner = validated_data.get('owner', instance.owner)
         instance.save()
-        return  instance
+        return instance
 
 class PledgeDetailSerializer(PledgeSerializer):
     project = ProjectSerializer(many=True, read_only=True)
